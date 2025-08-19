@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Dropshipping Business Dashboard - Big Brain with OpenAI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4cc9f0;
+            --success: #06ffa5;
+            --warning: #ffbe0b;
+            --danger: #fb5607;
+            --dark: #03071e;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f7ff;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        /* Left Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px;
+            box-shadow: var(--shadow-lg);
+            overflow-y: auto;
+            transition: width 0.3s ease;
+        }
+        .sidebar h2 {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .accordion {
+            margin-bottom: 10px;
+        }
+        .accordion-item {
+            margin-bottom: 5px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .accordion-header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.3s ease;
+        }
+        .accordion-header:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .accordion-header.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .accordion-title {
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        .accordion-title i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+        .accordion-header.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .accordion-content.active {
+            max-height: 500px;
+        }
+        .accordion-body {
+            padding: 15px;
+        }
+        .sub-nav {
+            margin-top: 10px;
+        }
+        .sub-nav-item {
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        .sub-nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .sub-nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .sub-nav-item i {
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 1.2rem;
+            color: var(--gray);
+        }
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .dashboard-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .card-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        .chart-container {
+            height: 200px;
+            position: relative;
+        }
+        /* Content Area */
+        .content-area {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        /* Team Details */
+        .team-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .team-card {
+            background: var(--light);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .team-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .team-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .team-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .status-active {
+            background: rgba(6, 255, 165, 0.2);
+            color: var(--success);
+        }
+        .status-idle {
+            background: rgba(108, 117, 125, 0.2);
+            color: var(--gray);
+        }
+        .team-agents {
+            margin-bottom: 15px;
+        }
+        .agent-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .agent-item:last-child {
+            border-bottom: none;
+        }
+        .agent-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+        .agent-name {
+            flex-grow: 1;
+            font-weight: 500;
+        }
+        .agent-status {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        .team-tools {
+            margin-top: 15px;
+        }
+        .tool-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+            font-size: 0.9rem;
+        }
+        .tool-item i {
+            margin-right: 8px;
+            color: var(--accent);
+        }
+        /* A/B Testing */
+        .ab-test-container {
+            margin-bottom: 30px;
+        }
+        .ab-test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .ab-test-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .ab-test-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .ab-test-button:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+        .ab-tests {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .ab-test-card {
+            background: var(--light);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .ab-test-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .ab-test-description {
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+        .ab-test-results {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .ab-test-variant {
+            text-align: center;
+        }
+        .ab-test-variant-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .ab-test-variant-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        /* Meeting Room */
+        .meeting-container {
+            display: flex;
+            flex-direction: column;
+            height: 70vh;
+        }
+        .meeting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--dark);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+        .meeting-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .meeting-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .meeting-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .meeting-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .meeting-content {
+            flex-grow: 1;
+            display: flex;
+            background: #000;
+            border-radius: 0 0 15px 15px;
+            overflow: hidden;
+        }
+        .meeting-participants {
+            width: 250px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .participant {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .participant:last-child {
+            border-bottom: none;
+        }
+        .participant-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .participant-info {
+            flex-grow: 1;
+        }
+        .participant-name {
+            font-weight: bold;
+            color: white;
+        }
+        .participant-role {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .meeting-main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .meeting-video {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #222;
+            position: relative;
+        }
+        .meeting-video-placeholder {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .meeting-video-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .meeting-chat {
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        .chat-message.user {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .chat-message.agent {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 8px 15px;
+            color: white;
+            outline: none;
+        }
+        .chat-send {
+            background: var(--primary);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        /* Big Brain Chatbot */
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .chatbot-button {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: all 0.3s ease;
+        }
+        .chatbot-button:hover {
+            transform: scale(1.1);
+        }
+        .chatbot-window {
+            position: absolute;
+            bottom: 90px;
+            right: 0;
+            width: 400px;
+            height: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: scale(0);
+            transform-origin: bottom right;
+            transition: transform 0.3s ease;
+        }
+        .chatbot-window.open {
+            transform: scale(1);
+        }
+        .chatbot-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chatbot-title {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chatbot-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .chatbot-settings {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .chatbot-messages {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px;
+            border-radius: 18px;
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+        .message.user {
+            background: var(--light);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .message.bot {
+            background-color: var(--accent);
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .message.thinking {
+            background: var(--light);
+            color: var(--gray);
+            font-style: italic;
+            align-self: flex-start;
+        }
+        .chatbot-input-container {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+        .chatbot-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 1rem;
+            outline: none;
+        }
+        .chatbot-send {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        /* API Key Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        .form-input:focus {
+            border-color: var(--primary);
+        }
+        .form-help {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+        }
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        .btn-block {
+            width: 100%;
+            display: block;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .api-status.connected {
+            background: rgba(6, 255, 165, 0.1);
+            color: var(--success);
+        }
+        .api-status.disconnected {
+            background: rgba(251, 86, 7, 0.1);
+            color: var(--danger);
+        }
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .meeting-content {
+                flex-direction: column;
+            }
+            
+            .meeting-participants {
+                width: 100%;
+                height: 150px;
+            }
+            
+            .chatbot-window {
+                width: 350px;
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <h2><i class="fas fa-robot"></i> AI Teams</h2>
+            
+            <div class="accordion">
+                <!-- Home -->
+                <div class="accordion-item">
+                    <div class="accordion-header active" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <i class="fas fa-home"></i> Home
+                        </div>
+                        <i class="fas fa-chevron-down accordion-icon"></i>
+                    </div>
+                    <div class="accordion-content active">
+                        <div class="accordion-body">
+                            <div class="sub-nav">
+                                <div class="sub-nav-item active" onclick="showSection('home')">
+                                    <i class="fas fa-chart-line"></i> Dashboard
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Research -->
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <i class="fas fa-search"></i> Product Research
+                        </div>
+                        <i class="fas fa-chevron-down accordion-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <div class="sub-nav">
+                                <div class="sub-nav-item" onclick="showSection('research-overview')">
+                                    <i class="fas fa-info-circle"></i> Overview
+                                </div>
+                                <div class="sub-nav-item" onclick="showSection('research-agents')">
+                                    <i class="fas fa-users"></i> Agents
+                                </div>
+                                <div class="sub-nav-item" onclick="showSection('research-tools')">
+                                    <i class="fas fa-tools"></i> Tools
+                                </div>
+                                <div class="sub-nav-item" onclick="showSection('research-products')">
+                                    <i class="fas fa-box"></i> Products
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Video Creation -->
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <i class="fas fa-video"></i> Video Creation
+                        </div>
+                        <i class="fas fa-chevron-down accordion-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <div class="sub-nav">
+                                <div class="sub-nav-item" onclick="showSection('video-overview')">
+                                    <i class="fas fa-info-circle"></i> Overview
+                                </div>
+                                <div class="sub-nav-item" onclick="showSection('video-agents')">
+                                    <i class="fas fa-users"></i> Agents
+                                </div>
+                                <div class="sub-nav-item" onclick="showSection('video-tools')">
+                                    <i class="fas fa-tools"></i> Tools
+                                </div>
+                                <div class="sub-nav-item" onclick="showSection('video-videos')">
+                                    <i class="fas fa-film"></i> Videos
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- A/B Tester -->
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <i class="fas fa-flask"></i> A/B Tester
+                        </div>
+                        <i class="fas fa-chevron-down accordion-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <div class="sub-nav">
+                                <div class="sub-nav-item" onclick="showSection('abtester-overview')">
+                                    <i class="fas fa-info-circle"></i> Overview
+                                </div>
+                                <div class="sub-nav-item" onclick="showSection('abtester-tests')">
+                                    <i class="fas fa-vial"></i> Tests
+                                </div>
+                                <div class="sub-nav-item" onclick="showSection('abtester-results')">
+                                    <i class="fas fa-chart-pie"></i> Results
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Meeting Room -->
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="accordion-title">
+                            <i class="fas fa-video"></i> Meeting Room
+                        </div>
+                        <i class="fas fa-chevron-down accordion-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-body">
+                            <div class="sub-nav">
+                                <div class="sub-nav-item" onclick="showSection('meeting-room')">
+                                    <i class="fas fa-video"></i> Join Meeting
+                                </div>
+                                <div class="sub-nav-item" onclick="showSection('meeting-schedule')">
+                                    <i class="fas fa-calendar"></i> Schedule
+                                </div>
+                                <div class="sub-nav-item" onclick="showSection('meeting-history')">
+                                    <i class="fas fa-history"></i> History
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1>AI Dropshipping Business Dashboard</h1>
+                <p>Monitor and control your AI-powered dropshipping business</p>
+            </div>
+            <!-- Home Section -->
+            <div id="home-section" class="content-section">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">Agent Health</div>
+                            <i class="fas fa-heartbeat card-icon"></i>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="agentHealthChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">Products Found</div>
+                            <i class="fas fa-box card-icon"></i>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="productsFoundChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">Product Performance</div>
+                            <i class="fas fa-chart-line card-icon"></i>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="productPerformanceChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <div class="card-title">Team Activity</div>
+                            <i class="fas fa-users card-icon"></i>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="teamActivityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Product Research Overview Section -->
+            <div id="research-overview-section" class="content-section" style="display: none;">
+                <div class="content-area">
+                    <h2 class="section-title">
+                        <i class="fas fa-search"></i> Product Research - Overview
+                    </h2>
+                    
+                    <div class="team-details">
+                        <div class="team-card">
+                            <div class="team-header">
+                                <div class="team-name">Product Research Team</div>
+                                <div class="team-status status-active">Active</div>
+                            </div>
+                            <div class="team-agents">
+                                <div class="agent-item">
+                                    <div class="agent-icon">PR</div>
+                                    <div class="agent-name">Research Agent 1</div>
+                                    <div class="agent-status">Working</div>
+                                </div>
+                                <div class="agent-item">
+                                    <div class="agent-icon">VP</div>
+                                    <div class="agent-name">Virality Predictor</div>
+                                    <div class="agent-status">Idle</div>
+                                </div>
+                                <div class="agent-item">
+                                    <div class="agent-icon">PA</div>
+                                    <div class="agent-name">Profit Analyzer</div>
+                                    <div class="agent-status">Working</div>
+                                </div>
+                            </div>
+                            <div class="team-tools">
+                                <div class="tool-item">
+                                    <i class="fas fa-check-circle"></i> AliExpress API
+                                </div>
+                                <div class="tool-item">
+                                    <i class="fas fa-check-circle"></i> Temu Scraper
+                                </div>
+                                <div class="tool-item">
+                                    <i class="fas fa-check-circle"></i> Trend Analyzer
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Video Creation Overview Section -->
+            <div id="video-overview-section" class="content-section" style="display: none;">
+                <div class="content-area">
+                    <h2 class="section-title">
+                        <i class="fas fa-video"></i> Video Creation - Overview
+                    </h2>
+                    
+                    <div class="team-details">
+                        <div class="team-card">
+                            <div class="team-header">
+                                <div class="team-name">Video Creation Team</div>
+                                <div class="team-status status-active">Active</div>
+                            </div>
+                            <div class="team-agents">
+                                <div class="agent-item">
+                                    <div class="agent-icon">VG</div>
+                                    <div class="agent-name">Video Generator 1</div>
+                                    <div class="agent-status">Working</div>
+                                </div>
+                                <div class="agent-item">
+                                    <div class="agent-icon">VG</div>
+                                    <div class="agent-name">Video Generator 2</div>
+                                    <div class="agent-status">Idle</div>
+                                </div>
+                                <div class="agent-item">
+                                    <div class="agent-icon">VV</div>
+                                    <div class="agent-name">Video Variations</div>
+                                    <div class="agent-status">Working</div>
+                                </div>
+                            </div>
+                            <div class="team-tools">
+                                <div class="tool-item">
+                                    <i class="fas fa-check-circle"></i> CapCut AI
+                                </div>
+                                <div class="tool-item">
+                                    <i class="fas fa-check-circle"></i> InVideo
+                                </div>
+                                <div class="tool-item">
+                                    <i class="fas fa-check-circle"></i> RunwayML
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- A/B Tester Section -->
+            <div id="abtester-overview-section" class="content-section" style="display: none;">
+                <div class="content-area">
+                    <h2 class="section-title">
+                        <i class="fas fa-flask"></i> A/B Tester - Overview
+                    </h2>
+                    
+                    <div class="ab-test-container">
+                        <div class="ab-test-header">
+                            <div class="ab-test-title">Active A/B Tests</div>
+                            <button class="ab-test-button" onclick="showSection('abtester-tests')">
+                                <i class="fas fa-plus"></i> New Test
+                            </button>
+                        </div>
+                        
+                        <div class="ab-tests">
+                            <div class="ab-test-card">
+                                <div class="ab-test-name">Product Title Test</div>
+                                <div class="ab-test-description">Testing two different product titles to see which converts better</div>
+                                <div class="ab-test-results">
+                                    <div class="ab-test-variant">
+                                        <div class="ab-test-variant-name">Variant A</div>
+                                        <div class="ab-test-variant-value">12.5%</div>
+                                    </div>
+                                    <div class="ab-test-variant">
+                                        <div class="ab-test-variant-name">Variant B</div>
+                                        <div class="ab-test-variant-value">15.2%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ab-test-card">
+                                <div class="ab-test-name">Price Point Test</div>
+                                <div class="ab-test-description">Testing two different price points for the same product</div>
+                                <div class="ab-test-results">
+                                    <div class="ab-test-variant">
+                                        <div class="ab-test-variant-name">$19.99</div>
+                                        <div class="ab-test-variant-value">8.7%</div>
+                                    </div>
+                                    <div class="ab-test-variant">
+                                        <div class="ab-test-variant-name">$24.99</div>
+                                        <div class="ab-test-variant-value">7.2%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Meeting Room Section -->
+            <div id="meeting-room-section" class="content-section" style="display: none;">
+                <div class="content-area">
+                    <h2 class="section-title">
+                        <i class="fas fa-video"></i> Meeting Room
+                    </h2>
+                    
+                    <div class="meeting-container">
+                        <div class="meeting-header">
+                            <div class="meeting-title">AI Team Meeting</div>
+                            <div class="meeting-controls">
+                                <button class="meeting-btn" title="Mute">
+                                    <i class="fas fa-microphone"></i>
+                                </button>
+                                <button class="meeting-btn" title="Video">
+                                    <i class="fas fa-video"></i>
+                                </button>
+                                <button class="meeting-btn" title="Share Screen">
+                                    <i class="fas fa-desktop"></i>
+                                </button>
+                                <button class="meeting-btn" title="More">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="meeting-content">
+                            <div class="meeting-participants">
+                                <div class="participant">
+                                    <div class="participant-avatar">Y</div>
+                                    <div class="participant-info">
+                                        <div class="participant-name">You</div>
+                                        <div class="participant-role">Host</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="participant">
+                                    <div class="participant-avatar">PR</div>
+                                    <div class="participant-info">
+                                        <div class="participant-name">Research Team</div>
+                                        <div class="participant-role">AI Team</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="participant">
+                                    <div class="participant-avatar">VC</div>
+                                    <div class="participant-info">
+                                        <div class="participant-name">Video Team</div>
+                                        <div class="participant-role">AI Team</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="participant">
+                                    <div class="participant-avatar">MT</div>
+                                    <div class="participant-info">
+                                        <div class="participant-name">Marketing Team</div>
+                                        <div class="participant-role">AI Team</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="meeting-main">
+                                <div class="meeting-video">
+                                    <div class="meeting-video-placeholder">
+                                        <i class="fas fa-users"></i>
+                                        <h3>Team Meeting in Progress</h3>
+                                        <p>AI agents are discussing the current product strategy</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="meeting-chat">
+                                    <div class="chat-messages" id="meetingChatMessages">
+                                        <div class="chat-message agent">
+                                            <strong>Research Team:</strong> We've identified 5 trending products with high profit margins.
+                                        </div>
+                                        <div class="chat-message agent">
+                                            <strong>Video Team:</strong> We're ready to create promotional videos for the selected product.
+                                        </div>
+                                        <div class="chat-message agent">
+                                            <strong>Marketing Team:</strong> We'll prepare campaigns for TikTok and Instagram.
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="chat-input-container">
+                                        <input type="text" class="chat-input" id="meetingChatInput" placeholder="Type a message..." onkeypress="handleMeetingChatInput(event)">
+                                        <button class="chat-send" onclick="sendMeetingMessage()">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Placeholder sections for other content -->
+            <div id="research-agents-section" class="content-section" style="display: none;">
+                <div class="content-area">
+                    <h2 class="section-title">
+                        <i class="fas fa-users"></i> Product Research - Agents
+                    </h2>
+                    <p>Agent details and performance metrics will be displayed here.</p>
+                </div>
+            </div>
+            <div id="research-tools-section" class="content-section" style="display: none;">
+                <div class="content-area">
+                    <h2 class="section-title">
+                        <i class="fas fa-tools"></i> Product Research - Tools
+                    </h2>
+                    <p>Tools and APIs used by the Product Research team will be displayed here.</p>
+                </div>
+            </div>
+            <div id="research-products-section" class="content-section" style="display: none;">
+                <div class="content-area">
+                    <h2 class="section-title">
+                        <i class="fas fa-box"></i> Product Research - Products
+                    </h2>
+                    <p>Products discovered by the research team will be displayed here.</p>
+                </div>
+            </div>
+            <div id="video-agents-section" class="content-section" style="display: none;">
+                <div class="content-area">
+                    <h2 class="section-title">
+                        <i class="fas fa-users"></i> Video Creation - Agents
+                    </h2>
+                    <p>Video creation agents and their performance will be displayed here.</p>
+                </div>
+            </div>
+            <div id="video-tools-section" class="content-section" style="display: none;">
+                <div class="content-area">
+                    <h2 class="section-title">
+                        <i class="fas fa-tools"></i> Video Creation - Tools
+                    </h2>
+                    <p>Video creation tools and software will be displayed here.</p>
+                </div>
+            </div>
+            <div id="video-videos-section" class="content-section" style="display: none;">
+                <div class="content-area">
+                    <h2 class="section-title">
+                        <i class="fas fa-film"></i> Video Creation - Videos
+                    </h2>
+                    <p>Videos created by the team will be displayed here.</p>
+                </div>
+            </div>
+            <!-- Add more placeholder sections as needed -->
+        </div>
+    </div>
+    <!-- Big Brain Chatbot -->
+    <div class="chatbot-container">
+        <div class="chatbot-window" id="chatbotWindow">
+            <div class="chatbot-header">
+                <div class="chatbot-title">
+                    <i class="fas fa-brain"></i> Big Brain
+                </div>
+                <div>
+                    <button class="chatbot-settings" onclick="openApiKeyModal()" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button class="chatbot-close" onclick="toggleChatbot()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chatbot-messages" id="chatbotMessages">
+                <div class="message bot">
+                    Hi! I'm Big Brain, your AI assistant. I can help you with your dropshipping business. Just ask me anything!
+                </div>
+            </div>
+            <div class="chatbot-input-container">
+                <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Type a message..." onkeypress="handleChatInput(event)">
+                <button class="chatbot-send" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+        <button class="chatbot-button" id="chatbotButton" onclick="toggleChatbot()">
+            <i class="fas fa-brain"></i>
+        </button>
+    </div>
+    <!-- API Key Modal -->
+    <div class="modal" id="apiKeyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">OpenAI API Settings</div>
+                <button class="modal-close" onclick="closeApiKeyModal()">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="apiKeyInput">OpenAI API Key</label>
+                <input type="password" class="form-input" id="apiKeyInput" placeholder="sk-...">
+                <div class="form-help">Your API key will be stored locally in your browser.</div>
+            </div>
+            
+            <div class="api-status" id="apiStatus">
+                <i class="fas fa-times-circle"></i>
+                <span>Not connected to OpenAI API</span>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeApiKeyModal()">Cancel</button>
+                <button class="btn btn-primary btn-block" onclick="saveApiKey()">Save API Key</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+ // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDbfAig0CcmYmVmWxNICDbVpi3s05XNC4w",
+  authDomain: "acubic-e1e37.firebaseapp.com",
+  projectId: "acubic-e1e37",
+  storageBucket: "acubic-e1e37.firebasestorage.app",
+  messagingSenderId: "406910909385",
+  appId: "1:406910909385:web:7c848bc98cd9e3c8f04618",
+  measurementId: "G-06BM15WZDR"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Global variables for charts
+        let agentHealthChart, productsFoundChart, productPerformanceChart, teamActivityChart;
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize charts
+            initializeCharts();
+            
+            // Set up default section
+            showSection('home');
+            
+            // Check for saved API key
+            checkApiKey();
+            
+            // Load data from Firebase
+            loadDashboardData();
+        });
+        
+        // Firebase helper functions
+        function saveData(collection, data) {
+            return db.collection(collection).add({
+                ...data,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        function getData(collection, callback) {
+            db.collection(collection).orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                const data = [];
+                snapshot.forEach(doc => {
+                    data.push({ id: doc.id, ...doc.data() });
+                });
+                callback(data);
+            });
+        }
+
+        function loadDashboardData() {
+            // Load products data
+            getData('products', products => {
+                updateProductsChart(products);
+            });
+
+            // Load agents data
+            getData('agents', agents => {
+                updateAgentHealthChart(agents);
+            });
+
+            // Load performance data
+            getData('performance', performance => {
+                updatePerformanceChart(performance);
+            });
+
+            // Load team activity data
+            getData('teamActivity', activity => {
+                updateTeamActivityChart(activity);
+            });
+        }
+
+        // Update functions for charts
+        function updateProductsChart(products) {
+            if (!productsFoundChart) return;
+            
+            // Count products by day
+            const productsByDay = {
+                'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0
+            };
+            
+            products.forEach(product => {
+                if (product.createdAt) {
+                    const day = new Date(product.createdAt.toDate()).toLocaleDateString('en-US', { weekday: 'short' });
+                    if (productsByDay.hasOwnProperty(day)) {
+                        productsByDay[day]++;
+                    }
+                }
+            });
+            
+            productsFoundChart.data.datasets[0].data = Object.values(productsByDay);
+            productsFoundChart.update();
+        }
+
+        function updateAgentHealthChart(agents) {
+            if (!agentHealthChart) return;
+            
+            const statusCount = {
+                'Active': 0,
+                'Idle': 0,
+                'Error': 0
+            };
+            
+            agents.forEach(agent => {
+                if (statusCount.hasOwnProperty(agent.status)) {
+                    statusCount[agent.status]++;
+                }
+            });
+            
+            agentHealthChart.data.datasets[0].data = Object.values(statusCount);
+            agentHealthChart.update();
+        }
+
+        function updatePerformanceChart(performance) {
+            if (!productPerformanceChart) return;
+            
+            // Group by product name
+            const productData = {};
+            performance.forEach(item => {
+                if (!productData[item.productName]) {
+                    productData[item.productName] = [];
+                }
+                productData[item.productName].push(item.value);
+            });
+            
+            // Update chart with actual data or fallback
+            const datasets = [];
+            const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            
+            if (Object.keys(productData).length > 0) {
+                Object.entries(productData).forEach(([productName, values], index) => {
+                    datasets.push({
+                        label: productName,
+                        data: values.slice(0, 4),
+                        borderColor: index === 0 ? 'rgba(67, 97, 238, 1)' : 'rgba(76, 201, 240, 1)',
+                        backgroundColor: index === 0 ? 'rgba(67, 97, 238, 0.1)' : 'rgba(76, 201, 240, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    });
+                });
+            } else {
+                // Fallback data
+                datasets.push(
+                    {
+                        label: 'Product A',
+                        data: [30, 45, 60, 75],
+                        borderColor: 'rgba(67, 97, 238, 1)',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Product B',
+                        data: [20, 35, 40, 55],
+                        borderColor: 'rgba(76, 201, 240, 1)',
+                        backgroundColor: 'rgba(76, 201, 240, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                );
+            }
+            
+            productPerformanceChart.data.labels = labels;
+            productPerformanceChart.data.datasets = datasets;
+            productPerformanceChart.update();
+        }
+
+        function updateTeamActivityChart(activity) {
+            if (!teamActivityChart) return;
+            
+            const activityData = {
+                'Research': 0,
+                'Video': 0,
+                'Website': 0,
+                'Marketing': 0,
+                'Sales': 0
+            };
+            
+            activity.forEach(item => {
+                if (activityData.hasOwnProperty(item.team)) {
+                    activityData[item.team] = Math.max(activityData[item.team], item.activityLevel);
+                }
+            });
+            
+            teamActivityChart.data.datasets[0].data = Object.values(activityData);
+            teamActivityChart.update();
+        }
+        
+        // Toggle accordion
+        function toggleAccordion(element) {
+            const content = element.nextElementSibling;
+            const icon = element.querySelector('.accordion-icon');
+            
+            // Close all other accordions
+            document.querySelectorAll('.accordion-content').forEach(item => {
+                if (item !== content) {
+                    item.classList.remove('active');
+                    item.previousElementSibling.classList.remove('active');
+                }
+            });
+            
+            // Toggle current accordion
+            content.classList.toggle('active');
+            element.classList.toggle('active');
+        }
+        
+        // Show section
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            const section = document.getElementById(`${sectionId}-section`);
+            if (section) {
+                section.style.display = 'block';
+            }
+            
+            // Update active sub-nav item
+            document.querySelectorAll('.sub-nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('onclick').includes(sectionId)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+        
+        // Initialize charts
+        function initializeCharts() {
+            // Agent Health Chart
+            const agentHealthCtx = document.getElementById('agentHealthChart').getContext('2d');
+            agentHealthChart = new Chart(agentHealthCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Idle', 'Error'],
+                    datasets: [{
+                        data: [24, 5, 1],
+                        backgroundColor: [
+                            'rgba(6, 255, 165, 0.7)',
+                            'rgba(108, 117, 125, 0.7)',
+                            'rgba(251, 86, 7, 0.7)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Products Found Chart
+            const productsFoundCtx = document.getElementById('productsFoundChart').getContext('2d');
+            productsFoundChart = new Chart(productsFoundCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                    datasets: [{
+                        label: 'Products Found',
+                        data: [12, 19, 8, 15, 22],
+                        backgroundColor: 'rgba(67, 97, 238, 0.7)',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Product Performance Chart
+            const productPerformanceCtx = document.getElementById('productPerformanceChart').getContext('2d');
+            productPerformanceChart = new Chart(productPerformanceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Product A',
+                        data: [30, 45, 60, 75],
+                        borderColor: 'rgba(67, 97, 238, 1)',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Product B',
+                        data: [20, 35, 40, 55],
+                        borderColor: 'rgba(76, 201, 240, 1)',
+                        backgroundColor: 'rgba(76, 201, 240, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Team Activity Chart
+            const teamActivityCtx = document.getElementById('teamActivityChart').getContext('2d');
+            teamActivityChart = new Chart(teamActivityCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Research', 'Video', 'Website', 'Marketing', 'Sales'],
+                    datasets: [{
+                        label: 'Team Activity',
+                        data: [85, 70, 60, 90, 75],
+                        backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                        borderColor: 'rgba(67, 97, 238, 1)',
+                        pointBackgroundColor: 'rgba(67, 97, 238, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(67, 97, 238, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Meeting room functions
+        function handleMeetingChatInput(event) {
+            if (event.key === 'Enter') {
+                sendMeetingMessage();
+            }
+        }
+        
+        function sendMeetingMessage() {
+            const input = document.getElementById('meetingChatInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            // Add user message to chat
+            const chatMessages = document.getElementById('meetingChatMessages');
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message user';
+            messageElement.innerHTML = `<strong>You:</strong> ${message}`;
+            chatMessages.appendChild(messageElement);
+            
+            // Save to Firebase
+            saveData('meetingMessages', {
+                user: 'You',
+                message: message,
+                timestamp: new Date()
+            });
+            
+            // Clear input
+            input.value = '';
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Simulate AI response after a delay
+            setTimeout(() => {
+                const responses = [
+                    "That's a great suggestion! We'll implement that strategy.",
+                    "I agree. Let's focus on the highest margin products first.",
+                    "Our data shows that approach has a 15% higher conversion rate.",
+                    "We'll need to coordinate with the Video team for this.",
+                    "That aligns with our quarterly goals. Let's proceed."
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                const responseElement = document.createElement('div');
+                responseElement.className = 'chat-message agent';
+                responseElement.innerHTML = `<strong>AI Teams:</strong> ${randomResponse}`;
+                chatMessages.appendChild(responseElement);
+                
+                // Save AI response to Firebase
+                saveData('meetingMessages', {
+                    user: 'AI Teams',
+                    message: randomResponse,
+                    timestamp: new Date()
+                });
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1000);
+        }
+        
+        // Big Brain Chatbot Functions
+        function toggleChatbot() {
+            const chatbotWindow = document.getElementById('chatbotWindow');
+            chatbotWindow.classList.toggle('open');
+        }
+        
+        function handleChatInput(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        // Check for saved API key
+        function checkApiKey() {
+            const savedApiKey = localStorage.getItem('openai_api_key');
+            if (savedApiKey) {
+                updateApiStatus(true);
+            }
+        }
+        
+        // Open API key modal
+        function openApiKeyModal() {
+            const modal = document.getElementById('apiKeyModal');
+            const input = document.getElementById('apiKeyInput');
+            const savedApiKey = localStorage.getItem('openai_api_key');
+            
+            if (savedApiKey) {
+                input.value = savedApiKey;
+            }
+            
+            modal.style.display = 'flex';
+        }
+        
+        // Close API key modal
+        function closeApiKeyModal() {
+            const modal = document.getElementById('apiKeyModal');
+            modal.style.display = 'none';
+        }
+        
+        // Save API key
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            
+            if (!apiKey) {
+                alert('Please enter your OpenAI API key');
+                return;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('openai_api_key', apiKey);
+            
+            // Update status
+            updateApiStatus(true);
+            
+            // Close modal
+            closeApiKeyModal();
+        }
+        
+        // Update API status
+        function updateApiStatus(connected) {
+            const statusElement = document.getElementById('apiStatus');
+            
+            if (connected) {
+                statusElement.className = 'api-status connected';
+                statusElement.innerHTML = '<i class="fas fa-check-circle"></i> <span>Connected to OpenAI API</span>';
+            } else {
+                statusElement.className = 'api-status disconnected';
+                statusElement.innerHTML = '<i class="fas fa-times-circle"></i> <span>Not connected to OpenAI API</span>';
+            }
+        }
+        
+        // Send message to OpenAI API
+        async function sendMessage() {
+            const input = document.getElementById('chatbotInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            // Add user message to chat
+            addChatMessage(message, 'user');
+            
+            // Clear input
+            input.value = '';
+            
+            // Get API key
+            const apiKey = localStorage.getItem('openai_api_key');
+            
+            if (!apiKey) {
+                // Show API key modal
+                openApiKeyModal();
+                return;
+            }
+            
+            // Show thinking indicator
+            addChatMessage('Thinking...', 'thinking');
+            
+            try {
+                // For demo purposes, we'll simulate API response
+                // In production, you would make a real API call here
+                
+                setTimeout(() => {
+                    // Remove thinking indicator
+                    const thinkingMessage = document.querySelector('.message.thinking');
+                    if (thinkingMessage) {
+                        thinkingMessage.remove();
+                    }
+                    
+                    // Simulate AI response
+                    const responses = [
+                        "I understand you're interested in dropshipping. The Product Research team has found several trending products this week with high profit margins.",
+                        "For your video creation needs, our AI team can generate promotional videos in multiple formats optimized for different platforms.",
+                        "Based on current market trends, I recommend focusing on home and kitchen products which have shown a 23% increase in demand recently.",
+                        "The A/B testing module shows that product titles with emotional triggers perform 15% better than descriptive titles.",
+                        "I can help you analyze your product performance data. Which specific metrics would you like to focus on?"
+                    ];
+                    
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    addChatMessage(randomResponse, 'bot');
+                    
+                    // Save conversation to Firebase
+                    saveData('chatbotMessages', {
+                        user: 'bot',
+                        message: randomResponse,
+                        timestamp: new Date()
+                    });
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error calling OpenAI API:', error);
+                
+                // Remove thinking indicator
+                const thinkingMessage = document.querySelector('.message.thinking');
+                if (thinkingMessage) {
+                    thinkingMessage.remove();
+                }
+                
+                // Show error message
+                addChatMessage('Sorry, I encountered an error. Please check your API key and try again.', 'bot');
+            }
+        }
+        
+        // Add chat message
+        function addChatMessage(message, sender) {
+            const messagesContainer = document.getElementById('chatbotMessages');
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${sender}`;
+            messageElement.textContent = message;
+            messagesContainer.appendChild(messageElement);
+            
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
